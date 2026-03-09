@@ -180,7 +180,7 @@ export default function App() {
     tareasPreferidas: "",
     habilidades: "",
     areasDesarrollo: "",
-    tipoOrganizacion: "Medio de comunicación",
+    tipoOrganizacion: [], // <-- Cambiado a array para opciones múltiples
     tipoOrganizacionOtrosTexto: ""
   };
   const [formData, setFormData] = useState(formularioVacio);
@@ -249,7 +249,14 @@ export default function App() {
 
   const abrirMiEditor = () => {
     setModoAdminCarga(false);
-    setFormData(miPerfil ? { ...formularioVacio, ...miPerfil } : { ...formularioVacio, email: user.email });
+    
+    // Si el perfil es viejo y tiene la organización como texto simple, lo convertimos a lista
+    let dataPerfil = miPerfil ? { ...miPerfil } : null;
+    if (dataPerfil && typeof dataPerfil.tipoOrganizacion === 'string') {
+      dataPerfil.tipoOrganizacion = [dataPerfil.tipoOrganizacion];
+    }
+
+    setFormData(dataPerfil ? { ...formularioVacio, ...dataPerfil } : { ...formularioVacio, email: user.email });
     setMostrandoEditor(true);
   };
 
@@ -277,6 +284,20 @@ export default function App() {
     });
   };
 
+  // Manejador específico para el array de tipos de organización
+  const handleCheckboxOrganizacionChange = (org) => {
+    setFormData(prev => {
+      let orgsActuales = prev.tipoOrganizacion || [];
+      if (typeof orgsActuales === 'string') orgsActuales = [orgsActuales]; // Compatibilidad con perfiles viejos
+      
+      if (orgsActuales.includes(org)) {
+        return { ...prev, tipoOrganizacion: orgsActuales.filter(o => o !== org) };
+      } else {
+        return { ...prev, tipoOrganizacion: [...orgsActuales, org] };
+      }
+    });
+  };
+
   const guardarPerfil = async (e) => {
     e.preventDefault();
     if (!user) return;
@@ -288,6 +309,11 @@ export default function App() {
 
     if (formData.areas.length === 0) {
       alert("Por favor, selecciona al menos un área.");
+      return;
+    }
+
+    if (!formData.tipoOrganizacion || formData.tipoOrganizacion.length === 0) {
+      alert("Por favor, selecciona al menos un tipo de organización.");
       return;
     }
 
@@ -521,9 +547,21 @@ export default function App() {
                   </div>
                 )}
 
-                {perfilSeleccionado.tipoOrganizacion && (
+                {(perfilSeleccionado.tipoOrganizacion && perfilSeleccionado.tipoOrganizacion.length > 0) && (
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 inline-block w-full">
-                    <p className="text-sm text-slate-500">Me imagino trabajando en: <span className="font-semibold text-slate-800">{perfilSeleccionado.tipoOrganizacion === "Otros" ? perfilSeleccionado.tipoOrganizacionOtrosTexto : perfilSeleccionado.tipoOrganizacion}</span></p>
+                    <p className="text-sm text-slate-500 mb-2">Me imagino trabajando en:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.isArray(perfilSeleccionado.tipoOrganizacion) 
+                        ? perfilSeleccionado.tipoOrganizacion.map((org, idx) => (
+                          <span key={idx} className="bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                            {org === "Otros" && perfilSeleccionado.tipoOrganizacionOtrosTexto ? `Otros: ${perfilSeleccionado.tipoOrganizacionOtrosTexto}` : org}
+                          </span>
+                        ))
+                        : <span className="bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                            {perfilSeleccionado.tipoOrganizacion === "Otros" ? perfilSeleccionado.tipoOrganizacionOtrosTexto : perfilSeleccionado.tipoOrganizacion}
+                          </span>
+                      }
+                    </div>
                   </div>
                 )}
               </div>
@@ -697,12 +735,22 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">¿En qué tipo de organización te imaginás trabajando? <span className="text-red-500">*</span></label>
-                  <select required name="tipoOrganizacion" value={formData.tipoOrganizacion} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                     {TIPOS_ORGANIZACION.map(org => <option key={org} value={org}>{org}</option>)}
-                  </select>
-                  {formData.tipoOrganizacion === "Otros" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">¿En qué tipo de organización te imaginás trabajando? (Elegí todas las que apliquen) <span className="text-red-500">*</span></label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                    {TIPOS_ORGANIZACION.map(org => (
+                      <label key={org} className="flex items-center gap-2 text-sm bg-white p-2 rounded border border-slate-200 cursor-pointer hover:bg-blue-50">
+                        <input 
+                          type="checkbox" 
+                          checked={(formData.tipoOrganizacion || []).includes(org)} 
+                          onChange={() => handleCheckboxOrganizacionChange(org)} 
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300" 
+                        />
+                        {org}
+                      </label>
+                    ))}
+                  </div>
+                  {(formData.tipoOrganizacion || []).includes("Otros") && (
                     <div className="mt-2 pl-2">
                       <input required name="tipoOrganizacionOtrosTexto" type="text" value={formData.tipoOrganizacionOtrosTexto} onChange={handleInputChange} className="w-full p-2 border-b border-slate-300 outline-none focus:border-blue-500 text-sm bg-transparent" placeholder="Especifica qué tipo de organización..." />
                     </div>
