@@ -51,8 +51,8 @@ const ANIOS_CURSADA = ["1ro", "2do", "3ro", "4to", "Graduado/a"];
 
 // --- COMPONENTES AUXILIARES ---
 const Modal = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-scale-up">
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-scale-up" onClick={e => e.stopPropagation()}>
       <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors z-10 sticky-close">
         <X size={20} />
       </button>
@@ -62,8 +62,11 @@ const Modal = ({ children, onClose }) => (
 );
 
 // TARJETA DE PERFIL (Mini-CV)
-const ContactCard = ({ estudiante, esMio, onEdit }) => (
-  <div className={`bg-white rounded-xl shadow-sm border ${estudiante.esDemo ? 'border-dashed border-slate-300 bg-slate-50' : esMio ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-200'} hover:shadow-md transition-all duration-300 flex flex-col h-full group relative overflow-hidden`}>
+const ContactCard = ({ estudiante, esMio, onEdit, onVerDetalle }) => (
+  <div 
+    onClick={onVerDetalle}
+    className={`bg-white rounded-xl shadow-sm border cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all duration-300 flex flex-col h-full group relative overflow-hidden ${estudiante.esDemo ? 'border-dashed border-slate-300 bg-slate-50' : esMio ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-200'}`}
+  >
     {estudiante.esDemo && <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 font-bold z-20 rounded-bl-lg">MODO DEMO</div>}
     {esMio && <div className="absolute top-3 right-3 z-10"><span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md"><User size={12} /> Tu Perfil</span></div>}
     
@@ -77,7 +80,11 @@ const ContactCard = ({ estudiante, esMio, onEdit }) => (
             <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><User size={40} /></div>
           )}
           {esMio && (
-            <button onClick={onEdit} className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full shadow-md transition-transform hover:scale-110 z-20" title="Editar mi foto y datos">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit(); }} 
+              className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full shadow-md transition-transform hover:scale-110 z-20" 
+              title="Editar mi foto y datos"
+            >
               <Edit3 size={12} />
             </button>
           )}
@@ -128,9 +135,9 @@ const ContactCard = ({ estudiante, esMio, onEdit }) => (
 
       <div className="border-t border-slate-100 pt-4 mt-auto">
         <div className="flex gap-3 justify-start">
-          {estudiante.email && <a href={`mailto:${estudiante.email}`} className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Email"><Mail size={18} /></a>}
-          {estudiante.telefono && <a href={`https://wa.me/${estudiante.telefono.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-green-50 hover:text-green-600 transition-colors" title="Teléfono / WhatsApp"><Phone size={18} /></a>}
-          {estudiante.linkedin && <a href={estudiante.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors" title="LinkedIn"><Linkedin size={18} /></a>}
+          {estudiante.email && <a href={`mailto:${estudiante.email}`} onClick={e => e.stopPropagation()} className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Email"><Mail size={18} /></a>}
+          {estudiante.telefono && <a href={`https://wa.me/${estudiante.telefono.replace(/\D/g,'')}`} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-green-50 hover:text-green-600 transition-colors" title="Teléfono / WhatsApp"><Phone size={18} /></a>}
+          {estudiante.linkedin && <a href={estudiante.linkedin} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors" title="LinkedIn"><Linkedin size={18} /></a>}
         </div>
       </div>
     </div>
@@ -145,12 +152,14 @@ export default function App() {
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [busqueda, setBusqueda] = useState("");
   
-  // Estados para el editor
+  // Estados para modales
   const [mostrandoEditor, setMostrandoEditor] = useState(false);
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState(null); // NUEVO ESTADO PARA VER EL PERFIL
+  
   const [guardando, setGuardando] = useState(false);
   const [modoAdminCarga, setModoAdminCarga] = useState(false);
 
-  // Estados para Autenticación con Email (Simplificado)
+  // Estados para Autenticación con Email
   const [mostrandoAuth, setMostrandoAuth] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authError, setAuthError] = useState("");
@@ -163,7 +172,7 @@ export default function App() {
     telefono: "", 
     linkedin: "", 
     imagen: "",
-    areas: [], // Array porque son múltiples opciones
+    areas: [], 
     areasOtrosTexto: "", 
     experiencia: "No",
     experienciaDetalle: "",
@@ -176,24 +185,20 @@ export default function App() {
   };
   const [formData, setFormData] = useState(formularioVacio);
 
-  // Funciones de Auth (Solo Correo)
+  // Funciones de Auth
   const manejarAuth = async (e) => {
     e.preventDefault();
-    setAuthError("Conectando con Firebase..."); // Mensaje para saber que está cargando
+    setAuthError("Conectando con Firebase..."); 
     
-    // Creamos una contraseña oculta estándar basada en el correo
-    // (Firebase exige mínimo 6 caracteres, así que le sumamos un texto fijo)
     const hiddenPassword = `F4bric4_${authEmail.toLowerCase()}`;
     
     try {
-      // 1. Intentamos iniciar sesión
       await signInWithEmailAndPassword(auth, authEmail, hiddenPassword);
       setMostrandoAuth(false);
       setAuthEmail("");
       setAuthError("");
     } catch (error) {
       console.log("Fallo el login, intentando registro. Error original:", error.code);
-      // 2. Si el usuario no existe, lo creamos automáticamente
       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, authEmail, hiddenPassword);
@@ -202,9 +207,8 @@ export default function App() {
           setAuthError("");
         } catch (regError) {
           console.error("Error al registrar:", regError);
-          // Si el correo ya existía (por ejemplo, por haber usado Google antes)
           if (regError.code === 'auth/email-already-in-use') {
-             setAuthError("Este correo ya existe en la base (¿Usaste Google antes?). Bórralo en la consola de Firebase > Authentication.");
+             setAuthError("Este correo ya existe en la base. Bórralo en la consola de Firebase.");
           } else {
              setAuthError("Hubo un error al registrar: " + regError.code);
           }
@@ -266,9 +270,9 @@ export default function App() {
     setFormData(prev => {
       const areasActuales = prev.areas || [];
       if (areasActuales.includes(area)) {
-        return { ...prev, areas: areasActuales.filter(a => a !== area) }; // Quitar
+        return { ...prev, areas: areasActuales.filter(a => a !== area) };
       } else {
-        return { ...prev, areas: [...areasActuales, area] }; // Agregar
+        return { ...prev, areas: [...areasActuales, area] };
       }
     });
   };
@@ -278,13 +282,12 @@ export default function App() {
     if (!user) return;
     
     if (modoAdminCarga && !formData.email) {
-      alert("Para cargar a otra persona, es obligatorio ingresar su Email. Así podrán reclamar la cuenta luego.");
+      alert("Para cargar a otra persona, es obligatorio ingresar su Email.");
       return;
     }
 
-    // Validar al menos 1 área si queremos que sea estricto como el form (Opcional)
     if (formData.areas.length === 0) {
-      alert("Por favor, selecciona al menos un área en la que te sientes cómodo/a.");
+      alert("Por favor, selecciona al menos un área.");
       return;
     }
 
@@ -309,11 +312,9 @@ export default function App() {
     }
   };
 
-  // Filtrado actualizado para soportar el array de áreas
+  // Filtrado
   const estudiantesFiltrados = estudiantesReales.filter(est => {
     const coincideCategoria = filtroCategoria === "Todas" || (est.areas && est.areas.includes(filtroCategoria));
-    
-    // Búsqueda en varios campos de texto para que sea potente
     const searchStr = `${est.nombre} ${est.herramientas} ${est.habilidades} ${est.tareasPreferidas}`.toLowerCase();
     const coincideBusqueda = searchStr.includes(busqueda.toLowerCase());
     
@@ -327,7 +328,6 @@ export default function App() {
       <header className="bg-slate-900 text-white shadow-lg relative overflow-hidden">
         <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
           
-          {/* BARRA SUPERIOR DE USUARIO */}
           <div className="flex justify-end mb-6">
             {user ? (
               <div className="flex items-center gap-4 bg-slate-800/50 py-2 px-4 rounded-full border border-slate-700 text-sm">
@@ -410,14 +410,24 @@ export default function App() {
                  (`${miPerfil.nombre} ${miPerfil.herramientas} ${miPerfil.tareasPreferidas}`).toLowerCase().includes(busqueda.toLowerCase())
               ) && (
                 <div className="order-first">
-                   <ContactCard estudiante={miPerfil} esMio={true} onEdit={abrirMiEditor} />
+                   <ContactCard 
+                      estudiante={miPerfil} 
+                      esMio={true} 
+                      onEdit={abrirMiEditor} 
+                      onVerDetalle={() => setPerfilSeleccionado(miPerfil)} 
+                    />
                 </div>
               )}
 
               {estudiantesFiltrados
                 .filter(est => est.id !== user?.email)
                 .map(estudiante => (
-                <ContactCard key={estudiante.id} estudiante={estudiante} esMio={false} />
+                <ContactCard 
+                  key={estudiante.id} 
+                  estudiante={estudiante} 
+                  esMio={false} 
+                  onVerDetalle={() => setPerfilSeleccionado(estudiante)} 
+                />
               ))}
             </div>
 
@@ -433,42 +443,146 @@ export default function App() {
         )}
       </main>
       
-      {/* MODAL DE AUTENTICACIÓN (Sin Contraseña) */}
+      {/* -------------------------------------------------------------------------------- */}
+      {/* MODAL DE PERFIL COMPLETO (LA NUEVA VENTANITA) */}
+      {/* -------------------------------------------------------------------------------- */}
+      {perfilSeleccionado && (
+        <Modal onClose={() => setPerfilSeleccionado(null)}>
+          <div className="p-0 overflow-hidden">
+            {/* Cabecera oscura del modal */}
+            <div className="bg-slate-900 h-32 w-full relative"></div>
+
+            <div className="px-8 pb-8">
+              {/* Foto redonda flotante */}
+              <div className="relative -mt-16 mb-4 flex justify-between items-end">
+                <div className="w-32 h-32 bg-white rounded-full p-1.5 shadow-lg flex-shrink-0">
+                  {perfilSeleccionado.imagen ? (
+                    <img src={perfilSeleccionado.imagen} alt={perfilSeleccionado.nombre} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                      <User size={64} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Información principal */}
+              <h2 className="text-3xl font-bold text-slate-900">{perfilSeleccionado.nombre || "Sin Nombre"}</h2>
+              <p className="text-blue-600 font-medium text-lg mt-1">
+                {perfilSeleccionado.año ? `Cursando: ${perfilSeleccionado.año}` : "Estudiante"}
+              </p>
+
+              {/* Áreas / Etiquetas */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {(perfilSeleccionado.areas || []).map((area, idx) => (
+                  <span key={idx} className="bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
+                    {area === "Otros" && perfilSeleccionado.areasOtrosTexto ? `Otros: ${perfilSeleccionado.areasOtrosTexto}` : area}
+                  </span>
+                ))}
+              </div>
+
+              <hr className="my-6 border-slate-100" />
+
+              {/* Secciones detalladas con la info completa */}
+              <div className="space-y-6">
+                
+                {perfilSeleccionado.tareasPreferidas && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Target size={16}/> Tareas que me interesan</h3>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{perfilSeleccionado.tareasPreferidas}</p>
+                  </div>
+                )}
+
+                {perfilSeleccionado.herramientas && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Wrench size={16}/> Herramientas que manejo</h3>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{perfilSeleccionado.herramientas}</p>
+                  </div>
+                )}
+
+                {perfilSeleccionado.habilidades && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">En lo que soy bueno/a</h3>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{perfilSeleccionado.habilidades}</p>
+                  </div>
+                )}
+
+                {perfilSeleccionado.areasDesarrollo && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Me gustaría seguir desarrollando</h3>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{perfilSeleccionado.areasDesarrollo}</p>
+                  </div>
+                )}
+
+                {perfilSeleccionado.experiencia === "Si" && perfilSeleccionado.experienciaDetalle && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><CheckCircle2 size={16}/> Experiencia previa</h3>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{perfilSeleccionado.experienciaDetalle}</p>
+                  </div>
+                )}
+
+                {perfilSeleccionado.tipoOrganizacion && (
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 inline-block w-full">
+                    <p className="text-sm text-slate-500">Me imagino trabajando en: <span className="font-semibold text-slate-800">{perfilSeleccionado.tipoOrganizacion === "Otros" ? perfilSeleccionado.tipoOrganizacionOtrosTexto : perfilSeleccionado.tipoOrganizacion}</span></p>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de contacto en el modal */}
+              <div className="bg-slate-50 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 border border-slate-200">
+                <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                  <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100 shrink-0">
+                    <Mail className="text-blue-600" size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Contacto</p>
+                    <p className="text-slate-900 font-semibold truncate">{perfilSeleccionado.email}</p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 justify-end">
+                  {perfilSeleccionado.telefono && (
+                    <a href={`https://wa.me/${perfilSeleccionado.telefono.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#128C7E] transition-colors shadow-sm" title="Enviar WhatsApp">
+                      <Phone size={18} />
+                    </a>
+                  )}
+                  {perfilSeleccionado.linkedin && (
+                    <a href={perfilSeleccionado.linkedin} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-[#0a66c2] text-white font-bold rounded-lg hover:bg-[#084e96] transition-colors shadow-sm" title="Ver perfil de LinkedIn">
+                      <Linkedin size={18} />
+                    </a>
+                  )}
+                  <a href={`mailto:${perfilSeleccionado.email}`} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    Escribir Correo
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </Modal>
+      )}
+
+
+      {/* MODAL DE AUTENTICACIÓN */}
       {mostrandoAuth && (
         <Modal onClose={() => setMostrandoAuth(false)}>
           <div className="p-6">
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">
-              Ingresar a La Fábrica
-            </h3>
-            <p className="text-sm text-slate-500 mb-6">
-              Solo ingresa tu correo para crear o editar tu perfil.
-            </p>
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">Ingresar a La Fábrica</h3>
+            <p className="text-sm text-slate-500 mb-6">Solo ingresa tu correo para crear o editar tu perfil.</p>
 
             <form onSubmit={manejarAuth} className="space-y-4">
-              {authError && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
-                  {authError}
-                </div>
-              )}
-              
+              {authError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">{authError}</div>}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 uppercase">Correo Electrónico</label>
-                <input 
-                  required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="ejemplo@uap.edu.ar" 
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                />
+                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@uap.edu.ar" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
-
-              <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all mt-4">
-                Continuar
-              </button>
+              <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all mt-4">Continuar</button>
             </form>
           </div>
         </Modal>
       )}
 
-      {/* MODAL / EDITOR DE PERFIL GIGANTE (BASADO EN FORMULARIO GOOGLE) */}
+      {/* MODAL / EDITOR DE PERFIL */}
       {mostrandoEditor && (
         <Modal onClose={() => setMostrandoEditor(false)}>
           <div className="p-6">
@@ -477,12 +591,8 @@ export default function App() {
                 {modoAdminCarga ? <ShieldAlert size={24} /> : <User size={24} />}
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-slate-800">
-                  {modoAdminCarga ? "Cargar ficha de tercero" : (miPerfil ? "Editar mi Ficha" : "Completar mi Perfil")}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {modoAdminCarga ? "Estás ingresando las respuestas del Google Form." : "Queremos conocer cual es tu perfil como comunicador."}
-                </p>
+                <h3 className="text-2xl font-bold text-slate-800">{modoAdminCarga ? "Cargar ficha de tercero" : (miPerfil ? "Editar mi Ficha" : "Completar mi Perfil")}</h3>
+                <p className="text-sm text-slate-500">{modoAdminCarga ? "Estás ingresando las respuestas del Google Form." : "Queremos conocer cual es tu perfil como comunicador."}</p>
               </div>
             </div>
 
@@ -509,12 +619,7 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-slate-500 uppercase">Correo Electrónico <span className="text-red-500">*</span></label>
-                    <input 
-                      required={modoAdminCarga} 
-                      disabled={!modoAdminCarga && miPerfil} 
-                      name="email" type="email" value={formData.email} onChange={handleInputChange} 
-                      className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-200" 
-                    />
+                    <input required={modoAdminCarga} disabled={!modoAdminCarga && miPerfil} name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-200" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-slate-500 uppercase">Teléfono (Opcional)</label>
@@ -543,26 +648,14 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                     {CATEGORIAS_AREAS.map(area => (
                       <label key={area} className="flex items-center gap-2 text-sm bg-white p-2 rounded border border-slate-200 cursor-pointer hover:bg-blue-50">
-                        <input 
-                          type="checkbox" 
-                          checked={(formData.areas || []).includes(area)}
-                          onChange={() => handleCheckboxAreaChange(area)}
-                          className="w-4 h-4 text-blue-600 rounded border-slate-300"
-                        />
+                        <input type="checkbox" checked={(formData.areas || []).includes(area)} onChange={() => handleCheckboxAreaChange(area)} className="w-4 h-4 text-blue-600 rounded border-slate-300" />
                         {area}
                       </label>
                     ))}
                   </div>
                   {(formData.areas || []).includes("Otros") && (
                     <div className="mt-2 pl-2">
-                      <input 
-                        name="areasOtrosTexto" 
-                        type="text" 
-                        value={formData.areasOtrosTexto} 
-                        onChange={handleInputChange} 
-                        className="w-full p-2 border-b border-slate-300 outline-none focus:border-blue-500 text-sm bg-transparent" 
-                        placeholder="Especifica qué otra área..." 
-                      />
+                      <input name="areasOtrosTexto" type="text" value={formData.areasOtrosTexto} onChange={handleInputChange} className="w-full p-2 border-b border-slate-300 outline-none focus:border-blue-500 text-sm bg-transparent" placeholder="Especifica qué otra área..." />
                     </div>
                   )}
                 </div>
@@ -611,15 +704,7 @@ export default function App() {
                   </select>
                   {formData.tipoOrganizacion === "Otros" && (
                     <div className="mt-2 pl-2">
-                      <input 
-                        required 
-                        name="tipoOrganizacionOtrosTexto" 
-                        type="text" 
-                        value={formData.tipoOrganizacionOtrosTexto} 
-                        onChange={handleInputChange} 
-                        className="w-full p-2 border-b border-slate-300 outline-none focus:border-blue-500 text-sm bg-transparent" 
-                        placeholder="Especifica qué tipo de organización..." 
-                      />
+                      <input required name="tipoOrganizacionOtrosTexto" type="text" value={formData.tipoOrganizacionOtrosTexto} onChange={handleInputChange} className="w-full p-2 border-b border-slate-300 outline-none focus:border-blue-500 text-sm bg-transparent" placeholder="Especifica qué tipo de organización..." />
                     </div>
                   )}
                 </div>
