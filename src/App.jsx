@@ -713,7 +713,7 @@ export default function App() {
               {authError && <div className="p-3 bg-red-50 text-red-600 font-bold text-sm rounded-lg border border-red-200">{authError}</div>}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Correo Electrónico</label>
-                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@uap.edu.ar" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@email.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
               </div>
               <button type="submit" className="w-full py-3 bg-[#5253ed] hover:bg-[#4041d5] text-[#dbff01] font-black rounded-lg shadow-md transition-all mt-4 uppercase tracking-wide">Continuar</button>
             </form>
