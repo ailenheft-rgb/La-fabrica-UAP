@@ -254,6 +254,46 @@ export default function App() {
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400; // Tamaño ideal para que la base de datos no se sature
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Comprime la imagen y la convierte a texto
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setFormData(prev => ({ ...prev, imagen: dataUrl }));
+      }
+      img.src = event.target.result;
+    }
+    reader.readAsDataURL(file);
+  };
+
   const handleCheckboxAreaChange = (area) => {
     setFormData(prev => {
       const areasActuales = prev.areas || [];
@@ -702,43 +742,35 @@ export default function App() {
                 <h4 className="font-black text-[#5253ed] border-b border-[#b4c9fd]/50 pb-2 uppercase tracking-wide">1. Datos Personales</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Nombre y Apellido <span className="text-red-500">*</span></label>
-                    <input required name="nombre" type="text" value={formData.nombre} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
+                <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil</label>
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-300 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {formData.imagen ? (
+                      <img src={formData.imagen} className="w-full h-full object-cover" alt="Preview" />
+                    ) : (
+                      <User size={24} className="text-slate-400" />
+                    )}
                   </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Año que estás cursando <span className="text-red-500">*</span></label>
-                    <select required name="año" value={formData.año} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium">
-                       {ANIOS_CURSADA.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Correo Electrónico <span className="text-red-500">*</span></label>
-                    <input required={modoAdminCarga} disabled={!modoAdminCarga && miPerfil} name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none disabled:bg-slate-200 transition-all font-medium" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Teléfono (Opcional)</label>
-                    <input name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} placeholder="Ej: +54 9 11..." className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
-                    <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil (URL Opcional)</label>
-                    <input name="imagen" type="url" value={formData.imagen} onChange={handleInputChange} placeholder="Enlace a tu foto" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
-                  </div>
+                  <label className="cursor-pointer bg-white hover:bg-slate-50 text-[#5253ed] px-3 py-2 rounded-lg text-sm font-bold transition-colors border border-[#5253ed]/30 shadow-sm">
+                    Subir Foto
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                  {formData.imagen && (
+                    <button type="button" onClick={() => setFormData(prev => ({...prev, imagen: ""}))} className="text-red-500 hover:text-red-700 text-sm font-bold">
+                      Quitar
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* SECCIÓN 2: PERFIL PROFESIONAL */}
+          {/* SECCIÓN 2: PERFIL PROFESIONAL */}
               <div className="bg-[#f4f7ff] p-5 rounded-xl border border-[#b4c9fd]/50 space-y-6">
                 <h4 className="font-black text-[#5253ed] border-b border-[#b4c9fd]/50 pb-2 uppercase tracking-wide">2. Tu Perfil como Comunicador</h4>
 
