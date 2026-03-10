@@ -16,7 +16,7 @@ const firebaseConfig = {
   measurementId: "G-V4N3P2QT3M"
 };
 
-const ADMIN_EMAIL = "ailen.heft@uap.edu.ar"; 
+const ADMIN_EMAIL = "ailen.heft@gmail.com"; 
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -56,7 +56,8 @@ const Modal = ({ children, onClose }) => (
   </div>
 );
 
-const ContactCard = ({ estudiante, esMio, onEdit, onVerDetalle }) => (
+// Agregamos isAdmin a los permisos de la tarjeta
+const ContactCard = ({ estudiante, esMio, isAdmin, onEdit, onVerDetalle }) => (
   <div 
     onClick={onVerDetalle}
     className={`bg-white rounded-xl shadow-sm border cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col h-full group relative overflow-hidden ${estudiante.esDemo ? 'border-dashed border-slate-300 bg-slate-50' : esMio ? 'border-[#5253ed] ring-2 ring-[#b4c9fd]' : 'border-slate-200 hover:border-[#b4c9fd]'}`}
@@ -73,11 +74,13 @@ const ContactCard = ({ estudiante, esMio, onEdit, onVerDetalle }) => (
           ) : (
             <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-[#b4c9fd]"><User size={40} /></div>
           )}
-          {esMio && (
+          
+          {/* Si es tu perfil o eres Admin, puedes ver el botón de editar */}
+          {(esMio || isAdmin) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onEdit(); }} 
               className="absolute bottom-0 right-0 bg-[#dbff01] hover:bg-[#c4e600] text-[#5253ed] p-1.5 rounded-full shadow-md transition-transform hover:scale-110 z-20" 
-              title="Editar mi foto y datos"
+              title={esMio ? "Editar mi foto y datos" : "Editar perfil como Admin"}
             >
               <Edit3 size={12} />
             </button>
@@ -144,10 +147,9 @@ export default function App() {
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [busqueda, setBusqueda] = useState("");
   
-  // Estados para modales
   const [mostrandoEditor, setMostrandoEditor] = useState(false);
   const [perfilSeleccionado, setPerfilSeleccionado] = useState(null);
-  const [mostrandoQuienesSomos, setMostrandoQuienesSomos] = useState(false); // NUEVO ESTADO PARA QUIÉNES SOMOS
+  const [mostrandoQuienesSomos, setMostrandoQuienesSomos] = useState(false);
   
   const [guardando, setGuardando] = useState(false);
   const [modoAdminCarga, setModoAdminCarga] = useState(false);
@@ -249,6 +251,17 @@ export default function App() {
     setMostrandoEditor(true);
   };
 
+  // NUEVO: Función para que el admin edite el perfil de otro
+  const abrirEditorAjeno = (perfil) => {
+    setModoAdminCarga(true); // Se comporta como admin
+    let dataPerfil = { ...perfil };
+    if (dataPerfil && typeof dataPerfil.tipoOrganizacion === 'string') {
+      dataPerfil.tipoOrganizacion = [dataPerfil.tipoOrganizacion];
+    }
+    setFormData({ ...formularioVacio, ...dataPerfil });
+    setMostrandoEditor(true);
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -263,7 +276,7 @@ export default function App() {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 400; // Tamaño ideal para que la base de datos no se sature
+        const MAX_WIDTH = 400; 
         const MAX_HEIGHT = 400;
         let width = img.width;
         let height = img.height;
@@ -285,7 +298,6 @@ export default function App() {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Comprime la imagen y la convierte a texto
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setFormData(prev => ({ ...prev, imagen: dataUrl }));
       }
@@ -369,14 +381,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafe] text-slate-800 relative pb-20 md:pb-0">
       
-      {/* -------------------------------------------------------------------------------- */}
-      {/* MAGIA DE LA TIPOGRAFÍA OUTFIT */}
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
         body { font-family: 'Outfit', sans-serif; }
       `}} />
-      {/* -------------------------------------------------------------------------------- */}
-
 
       {/* HEADER: Fondo Azul Violeta */}
       <header className="bg-[#5253ed] text-white shadow-lg relative overflow-hidden">
@@ -408,7 +416,6 @@ export default function App() {
               </h1>
               <p className="text-[#b4c9fd] mt-2 max-w-lg font-medium text-lg">Directorio de Perfiles de Comunicación. Encuentra el talento ideal.</p>
               
-              {/* BOTÓN DE QUIÉNES SOMOS */}
               <button 
                 onClick={() => setMostrandoQuienesSomos(true)} 
                 className="mt-4 flex items-center justify-center md:justify-start gap-2 text-[#dbff01] hover:text-white font-bold transition-colors w-full md:w-auto"
@@ -473,6 +480,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {/* Tarjeta del propio usuario (primero) */}
               {miPerfil && (filtroCategoria === "Todas" || (miPerfil.areas && miPerfil.areas.includes(filtroCategoria))) && (
                  (`${miPerfil.nombre} ${miPerfil.herramientas} ${miPerfil.tareasPreferidas}`).toLowerCase().includes(busqueda.toLowerCase())
               ) && (
@@ -480,12 +488,14 @@ export default function App() {
                    <ContactCard 
                       estudiante={miPerfil} 
                       esMio={true} 
+                      isAdmin={isAdmin} // Pasamos los permisos
                       onEdit={abrirMiEditor} 
                       onVerDetalle={() => setPerfilSeleccionado(miPerfil)} 
                     />
                 </div>
               )}
 
+              {/* Tarjetas del resto de los usuarios */}
               {estudiantesFiltrados
                 .filter(est => est.id !== user?.email)
                 .map(estudiante => (
@@ -493,6 +503,8 @@ export default function App() {
                   key={estudiante.id} 
                   estudiante={estudiante} 
                   esMio={false} 
+                  isAdmin={isAdmin} // Si eres admin, verás el lápiz de edición
+                  onEdit={() => abrirEditorAjeno(estudiante)} 
                   onVerDetalle={() => setPerfilSeleccionado(estudiante)} 
                 />
               ))}
@@ -514,13 +526,10 @@ export default function App() {
         )}
       </main>
 
-      {/* -------------------------------------------------------------------------------- */}
-      {/* MODAL QUIÉNES SOMOS (NUEVA SECCIÓN INSTITUCIONAL) */}
-      {/* -------------------------------------------------------------------------------- */}
+      {/* MODAL QUIÉNES SOMOS */}
       {mostrandoQuienesSomos && (
         <Modal onClose={() => setMostrandoQuienesSomos(false)}>
           <div className="p-0 overflow-hidden bg-slate-50">
-            {/* Header del Modal */}
             <div className="bg-[#5253ed] p-8 md:p-10 text-white relative">
                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                <h2 className="text-4xl font-black relative z-10 tracking-tight">LA FÁBRICA</h2>
@@ -528,7 +537,6 @@ export default function App() {
             </div>
             
             <div className="p-8 md:p-10 space-y-8">
-               {/* Sección Qué es */}
                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-2 h-full bg-[#dbff01]"></div>
                  <h3 className="text-[#5253ed] font-black text-2xl mb-3 flex items-center gap-2"><Target size={24}/> ¿Qué es?</h3>
@@ -537,7 +545,6 @@ export default function App() {
                  </p>
                </div>
                
-               {/* Grilla de info */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="bg-white p-6 rounded-2xl border border-[#b4c9fd]/50 shadow-sm">
                    <h3 className="text-[#5253ed] font-black text-lg mb-2 uppercase">Objetivo</h3>
@@ -557,7 +564,6 @@ export default function App() {
                  </div>
                </div>
 
-               {/* Valores y Público */}
                <div className="bg-[#f4f7ff] p-6 rounded-2xl border border-[#b4c9fd] shadow-sm">
                  <h3 className="text-[#5253ed] font-black text-xl mb-4">NUESTROS VALORES</h3>
                  <div className="flex flex-wrap gap-2 mb-6">
@@ -576,7 +582,6 @@ export default function App() {
         </Modal>
       )}
 
-      {/* -------------------------------------------------------------------------------- */}
       {/* MODAL DE PERFIL COMPLETO */}
       {perfilSeleccionado && (
         <Modal onClose={() => setPerfilSeleccionado(null)}>
@@ -612,42 +617,36 @@ export default function App() {
               <hr className="my-6 border-[#b4c9fd]/30" />
 
               <div className="space-y-6">
-                
                 {perfilSeleccionado.tareasPreferidas && (
                   <div>
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Target size={16} className="text-[#5253ed]"/> Tareas que me interesan</h3>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{perfilSeleccionado.tareasPreferidas}</p>
                   </div>
                 )}
-
                 {perfilSeleccionado.herramientas && (
                   <div>
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Wrench size={16} className="text-[#5253ed]"/> Herramientas que manejo</h3>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{perfilSeleccionado.herramientas}</p>
                   </div>
                 )}
-
                 {perfilSeleccionado.habilidades && (
                   <div>
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 text-[#5253ed]">En lo que soy bueno/a</h3>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{perfilSeleccionado.habilidades}</p>
                   </div>
                 )}
-
                 {perfilSeleccionado.areasDesarrollo && (
                   <div>
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 text-[#5253ed]">Me gustaría seguir desarrollando</h3>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{perfilSeleccionado.areasDesarrollo}</p>
                   </div>
                 )}
-
                 {perfilSeleccionado.experiencia === "Si" && perfilSeleccionado.experienciaDetalle && (
                   <div>
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><CheckCircle2 size={16} className="text-[#5253ed]"/> Experiencia previa</h3>
                     <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{perfilSeleccionado.experienciaDetalle}</p>
                   </div>
                 )}
-
                 {(perfilSeleccionado.tipoOrganizacion && perfilSeleccionado.tipoOrganizacion.length > 0) && (
                   <div className="bg-[#f4f7ff] p-4 rounded-xl border border-[#b4c9fd]/50 inline-block w-full">
                     <p className="text-sm text-[#5253ed] font-bold mb-2 uppercase">Me imagino trabajando en:</p>
@@ -678,7 +677,6 @@ export default function App() {
                     <p className="text-slate-900 font-bold truncate">{perfilSeleccionado.email}</p>
                   </div>
                 </div>
-                
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 justify-end">
                   {perfilSeleccionado.telefono && (
                     <a href={`https://wa.me/${perfilSeleccionado.telefono.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#128C7E] transition-colors shadow-sm" title="Enviar WhatsApp">
@@ -695,12 +693,10 @@ export default function App() {
                   </a>
                 </div>
               </div>
-
             </div>
           </div>
         </Modal>
       )}
-
 
       {/* MODAL DE AUTENTICACIÓN */}
       {mostrandoAuth && (
@@ -713,7 +709,7 @@ export default function App() {
               {authError && <div className="p-3 bg-red-50 text-red-600 font-bold text-sm rounded-lg border border-red-200">{authError}</div>}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Correo Electrónico</label>
-                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@email.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@mail.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
               </div>
               <button type="submit" className="w-full py-3 bg-[#5253ed] hover:bg-[#4041d5] text-[#dbff01] font-black rounded-lg shadow-md transition-all mt-4 uppercase tracking-wide">Continuar</button>
             </form>
@@ -730,8 +726,12 @@ export default function App() {
                 {modoAdminCarga ? <ShieldAlert size={24} /> : <User size={24} />}
               </div>
               <div>
-                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{modoAdminCarga ? "Cargar ficha de tercero" : (miPerfil ? "Editar mi Ficha" : "Completar mi Perfil")}</h3>
-                <p className="text-sm text-slate-500 font-medium">{modoAdminCarga ? "Estás ingresando las respuestas del Google Form." : "Queremos conocer cual es tu perfil como comunicador."}</p>
+                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
+                  {modoAdminCarga ? (formData.id ? "Editar Ficha de Tercero" : "Cargar ficha de tercero") : (miPerfil ? "Editar mi Ficha" : "Completar mi Perfil")}
+                </h3>
+                <p className="text-sm text-slate-500 font-medium">
+                  {modoAdminCarga ? "Estás ingresando o corrigiendo los datos de otra persona." : "Queremos conocer cual es tu perfil como comunicador."}
+                </p>
               </div>
             </div>
 
@@ -758,7 +758,17 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-600 uppercase">Correo Electrónico <span className="text-red-500">*</span></label>
-                    <input required={modoAdminCarga} disabled={!modoAdminCarga && miPerfil} name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none disabled:bg-slate-200 transition-all font-medium" />
+                    {/* El correo se desactiva siempre a menos que el admin esté creando uno NUEVO de cero */}
+                    <input 
+                      required={modoAdminCarga} 
+                      disabled={!modoAdminCarga || !!formData.id} 
+                      name="email" 
+                      type="email" 
+                      value={formData.email} 
+                      onChange={handleInputChange} 
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none disabled:bg-slate-200 transition-all font-medium" 
+                      title={!!formData.id ? "No se puede cambiar el correo de un perfil ya existente." : ""}
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-600 uppercase">Teléfono (Opcional)</label>
@@ -767,35 +777,35 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
-                <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil</label>
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-300 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    {formData.imagen ? (
-                      <img src={formData.imagen} className="w-full h-full object-cover" alt="Preview" />
-                    ) : (
-                      <User size={24} className="text-slate-400" />
-                    )}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
+                    <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
                   </div>
-                  <label className="cursor-pointer bg-white hover:bg-slate-50 text-[#5253ed] px-3 py-2 rounded-lg text-sm font-bold transition-colors border border-[#5253ed]/30 shadow-sm">
-                    Subir Foto
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                  {formData.imagen && (
-                    <button type="button" onClick={() => setFormData(prev => ({...prev, imagen: ""}))} className="text-red-500 hover:text-red-700 text-sm font-bold">
-                      Quitar
-                    </button>
-                  )}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil</label>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-300 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {formData.imagen ? (
+                          <img src={formData.imagen} className="w-full h-full object-cover" alt="Preview" />
+                        ) : (
+                          <User size={24} className="text-slate-400" />
+                        )}
+                      </div>
+                      <label className="cursor-pointer bg-white hover:bg-slate-50 text-[#5253ed] px-3 py-2 rounded-lg text-sm font-bold transition-colors border border-[#5253ed]/30 shadow-sm">
+                        Subir Foto
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      </label>
+                      {formData.imagen && (
+                        <button type="button" onClick={() => setFormData(prev => ({...prev, imagen: ""}))} className="text-red-500 hover:text-red-700 text-sm font-bold">
+                          Quitar
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* SECCIÓN 2: PERFIL PROFESIONAL */}
+              {/* SECCIÓN 2: PERFIL PROFESIONAL */}
               <div className="bg-[#f4f7ff] p-5 rounded-xl border border-[#b4c9fd]/50 space-y-6">
                 <h4 className="font-black text-[#5253ed] border-b border-[#b4c9fd]/50 pb-2 uppercase tracking-wide">2. Tu Perfil como Comunicador</h4>
 
