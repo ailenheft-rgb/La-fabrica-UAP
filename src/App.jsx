@@ -742,6 +742,31 @@ export default function App() {
                 <h4 className="font-black text-[#5253ed] border-b border-[#b4c9fd]/50 pb-2 uppercase tracking-wide">1. Datos Personales</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Nombre y Apellido <span className="text-red-500">*</span></label>
+                    <input required name="nombre" type="text" value={formData.nombre} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Año que estás cursando <span className="text-red-500">*</span></label>
+                    <select required name="año" value={formData.año} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium">
+                       {ANIOS_CURSADA.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Correo Electrónico <span className="text-red-500">*</span></label>
+                    <input required={modoAdminCarga} disabled={!modoAdminCarga && miPerfil} name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none disabled:bg-slate-200 transition-all font-medium" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Teléfono (Opcional)</label>
+                    <input name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} placeholder="Ej: +54 9 11..." className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
                 <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
