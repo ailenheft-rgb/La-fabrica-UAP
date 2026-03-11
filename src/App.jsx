@@ -16,7 +16,7 @@ const firebaseConfig = {
   measurementId: "G-V4N3P2QT3M"
 };
 
-const ADMIN_EMAIL = "nairmartinez2001@gmail.com"; 
+const ADMIN_EMAIL = "tu-correo-personal@gmail.com"; 
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -133,6 +133,7 @@ const ContactCard = ({ estudiante, esMio, isAdmin, onEdit, onVerDetalle }) => (
           {estudiante.email && <a href={`mailto:${estudiante.email}`} onClick={e => e.stopPropagation()} className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:bg-[#b4c9fd]/20 hover:text-[#5253ed] transition-colors" title="Email"><Mail size={18} /></a>}
           {estudiante.telefono && <a href={`https://wa.me/${estudiante.telefono.replace(/\D/g,'')}`} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:bg-[#b4c9fd]/20 hover:text-[#5253ed] transition-colors" title="Teléfono / WhatsApp"><Phone size={18} /></a>}
           {estudiante.linkedin && <a href={estudiante.linkedin} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:bg-[#b4c9fd]/20 hover:text-[#5253ed] transition-colors" title="LinkedIn"><Linkedin size={18} /></a>}
+          {estudiante.portfolio && <a href={estudiante.portfolio} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:bg-[#b4c9fd]/20 hover:text-[#5253ed] transition-colors" title="Portfolio"><Globe size={18} /></a>}
         </div>
       </div>
     </div>
@@ -164,6 +165,7 @@ export default function App() {
     email: "", 
     telefono: "", 
     linkedin: "", 
+    portfolio: "", // AGREGADO CAMPO PORTFOLIO
     imagen: "",
     areas: [], 
     areasOtrosTexto: "", 
@@ -560,7 +562,7 @@ export default function App() {
                  </div>
                  <div className="bg-white p-6 rounded-2xl border border-[#b4c9fd]/50 shadow-sm">
                    <h3 className="text-[#5253ed] font-black text-lg mb-2 uppercase">Resultado Esperado</h3>
-                   <p className="text-slate-600 font-medium">Mayor integración interanual, más proyectos concretos, fortalecimiento de la identidad de la carrera y continuidad institucional.</p>
+                   <p className="text-slate-600 font-medium">Mayor integración interanual, más proyectos concretos, fortalecimiento de la identidad de la carrera y continuity institucional.</p>
                  </div>
                </div>
 
@@ -688,8 +690,13 @@ export default function App() {
                       <Linkedin size={18} />
                     </a>
                   )}
+                  {perfilSeleccionado.portfolio && (
+                    <a href={perfilSeleccionado.portfolio} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-slate-800 text-white font-bold rounded-lg hover:bg-slate-700 transition-colors shadow-sm" title="Ver Portfolio Web">
+                      <Globe size={18} /> Portfolio
+                    </a>
+                  )}
                   <a href={`mailto:${perfilSeleccionado.email}`} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-[#dbff01] text-[#5253ed] font-black rounded-lg hover:bg-[#c4e600] transition-colors shadow-sm uppercase tracking-wide">
-                    Escribir Correo
+                    Escribir
                   </a>
                 </div>
               </div>
@@ -709,7 +716,7 @@ export default function App() {
               {authError && <div className="p-3 bg-red-50 text-red-600 font-bold text-sm rounded-lg border border-red-200">{authError}</div>}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Correo Electrónico</label>
-                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@mail.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
+                <input required type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="ejemplo@gmail.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
               </div>
               <button type="submit" className="w-full py-3 bg-[#5253ed] hover:bg-[#4041d5] text-[#dbff01] font-black rounded-lg shadow-md transition-all mt-4 uppercase tracking-wide">Continuar</button>
             </form>
@@ -776,33 +783,41 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* NUEVA FILA: LinkedIn y Portfolio */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-600 uppercase">LinkedIn (Si tenes)</label>
                     <input name="linkedin" type="url" value={formData.linkedin} onChange={handleInputChange} placeholder="URL de LinkedIn" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil</label>
-                    <div className="flex items-center gap-3 mt-1">
-                      <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-300 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {formData.imagen ? (
-                          <img src={formData.imagen} className="w-full h-full object-cover" alt="Preview" />
-                        ) : (
-                          <User size={24} className="text-slate-400" />
-                        )}
-                      </div>
-                      <label className="cursor-pointer bg-white hover:bg-slate-50 text-[#5253ed] px-3 py-2 rounded-lg text-sm font-bold transition-colors border border-[#5253ed]/30 shadow-sm">
-                        Subir Foto
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                      </label>
-                      {formData.imagen && (
-                        <button type="button" onClick={() => setFormData(prev => ({...prev, imagen: ""}))} className="text-red-500 hover:text-red-700 text-sm font-bold">
-                          Quitar
-                        </button>
-                      )}
-                    </div>
+                    <label className="text-xs font-bold text-slate-600 uppercase">Portfolio / Web (Opcional)</label>
+                    <input name="portfolio" type="url" value={formData.portfolio || ""} onChange={handleInputChange} placeholder="Enlace a tu portfolio o Behance" className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5253ed] focus:border-[#5253ed] outline-none transition-all font-medium" />
                   </div>
                 </div>
+
+                {/* FILA DE FOTO */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Foto de Perfil</label>
+                  <div className="flex items-center gap-3 mt-1">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-300 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {formData.imagen ? (
+                        <img src={formData.imagen} className="w-full h-full object-cover" alt="Preview" />
+                      ) : (
+                        <User size={24} className="text-slate-400" />
+                      )}
+                    </div>
+                    <label className="cursor-pointer bg-white hover:bg-slate-50 text-[#5253ed] px-3 py-2 rounded-lg text-sm font-bold transition-colors border border-[#5253ed]/30 shadow-sm">
+                      Subir Foto
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                    {formData.imagen && (
+                      <button type="button" onClick={() => setFormData(prev => ({...prev, imagen: ""}))} className="text-red-500 hover:text-red-700 text-sm font-bold">
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
               </div>
 
               {/* SECCIÓN 2: PERFIL PROFESIONAL */}
