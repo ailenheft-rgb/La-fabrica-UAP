@@ -16,7 +16,11 @@ const firebaseConfig = {
   measurementId: "G-V4N3P2QT3M"
 };
 
-const ADMIN_EMAIL = ["nairmartinez2001@gmail.com", "abigailalana9@gmail.com"];
+// ACÁ ESTÁ LA LISTA DE ADMINISTRADORES ACTUALIZADA
+const ADMIN_EMAILS = [
+  "nairmartinez2001@gmail.com", 
+  "abigailalana9@gmail.com"
+]; 
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
