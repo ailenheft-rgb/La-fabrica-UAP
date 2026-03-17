@@ -49,8 +49,12 @@ const TIPOS_ORGANIZACION = [
 
 const ANIOS_CURSADA = ["1ro", "2do", "3ro", "4to", "Graduado/a"];
 
-const Modal = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+// NUEVO: Agregamos closeOnOutsideClick para controlar si se cierra al tocar afuera
+const Modal = ({ children, onClose, closeOnOutsideClick = true }) => (
+  <div 
+    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" 
+    onClick={closeOnOutsideClick ? onClose : undefined}
+  >
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-scale-up" onClick={e => e.stopPropagation()}>
       <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 hover:text-[#5253ed] transition-colors z-10 sticky-close">
         <X size={20} />
@@ -238,7 +242,6 @@ export default function App() {
     return () => unsubscribeSnapshot();
   }, []);
 
-  // LA REGLA MÁGICA ACTUALIZADA PARA VARIOS ADMINS:
   // ¿La lista de correos ADMIN_EMAILS incluye el correo de la persona logueada?
   const isAdmin = user && ADMIN_EMAILS.includes(user.email.toLowerCase());
   
@@ -730,9 +733,9 @@ export default function App() {
         </Modal>
       )}
 
-      {/* MODAL / EDITOR DE PERFIL */}
+      {/* MODAL / EDITOR DE PERFIL CON CANDADO (closeOnOutsideClick={false}) */}
       {mostrandoEditor && (
-        <Modal onClose={() => setMostrandoEditor(false)}>
+        <Modal onClose={() => setMostrandoEditor(false)} closeOnOutsideClick={false}>
           <div className="p-6 bg-white">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
               <div className={`p-2 rounded-full ${modoAdminCarga ? 'bg-[#dbff01] text-[#5253ed]' : 'bg-[#5253ed] text-white'}`}>
