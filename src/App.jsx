@@ -422,7 +422,7 @@ export default function App() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
               <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center justify-center md:justify-start gap-3">
-                <img src="https://cdn-icons-png.flaticon.com/512/3061/3061341.png" className="w-10 h-10 filter invert opacity-90" alt="Logo" />
+                <img src="/favicon.jpeg" className="w-12 h-12 rounded-lg shadow-md object-cover" alt="Logo La Fábrica" />
                 LA FÁBRICA
               </h1>
               <p className="text-[#b4c9fd] mt-2 max-w-lg font-medium text-lg">Directorio de Perfiles de Comunicación. Encuentra el talento ideal.</p>
